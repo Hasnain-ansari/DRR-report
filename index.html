@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid black;
+            border-radius: 9px;
+            overflow: hidden;
+            
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+            overflow: hidden;
+            padding: 10px 30px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+        }
+
+        button {
+            background-color: #0074b9;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border: 2px solid black;
+            border-radius: 10px;
+            padding: 1px;
+        }
+
+        button:hover {
+            background-color: #00578c;
+        }
+
+        .row-heading th{
+            padding: 10px;
+            text-align: center;
+        }
+        
+        #row-data td{
+            padding: 10px 30px;
+            overflow: hidden;
+        }
+
+        #add-row-button{
+            max-width: 100px;
+            position: relative;
+            margin-bottom: 10px;
+            border: 2px solid black;
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        #add-row-button:hover{
+            background-color: #1e6896;
+        }
+
+        .cancel-button{
+            background-color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>DRR Report</h1>
+    <div class="container">
+        <button id="add-row-button">Add Row</button>
+        <table>
+            <tr class="row-heading">
+                <th>ID</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Month</th>
+                <th>Year</th>
+                <th>Dates Excluded</th>
+                <th>Number of Days</th>
+                <th>Enter Lead Count</th>
+                <th>Expected DRR</th>
+                <th>Action</th>
+            </tr>
+
+            <tr id="row-data">
+                <td><span type="text" id="srno">last</span></td>
+                <td><input type="date" class="start-date"></td>
+                <td><input type="date" class="end-date"></td>
+                <td><span class="month"></span></td>
+                <td><span class="year"></span></td>
+                <td><input type="text" class="excluded-dates" placeholder="e.g., 2023-10-16, 2023-10-20"></td>
+                <td><span class="num-days"></span></td>
+                <td><input type="number" class="lead-count"></td>
+                <td><input type="number" class="expected-drr"></td>
+                <td>
+                    <button class="save-button">Save</button>
+                    <button class="cancel-button">cancel</button>
+                    <button class="delete-button">Delete</button>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <script>
+        // Function to calculate the number of days between two dates, excluding specified dates
+        function getNumDays(startDate, endDate, excludedDates) {
+            const oneDay = 24 * 60 * 60 * 1000;
+            let numDays = 0;
+            let currentDate = new Date(startDate);
+
+            while (currentDate <= endDate) {
+                const dateString = currentDate.toISOString().split('T')[0];
+                if (!excludedDates.includes(dateString)) {
+                    numDays++;
+                }
+                currentDate.setTime(currentDate.getTime() + oneDay);
+            }
+
+            return numDays;
+        }
+
+        // Event listener for Save button
+        const saveButtons = document.querySelectorAll('.save-button');
+        saveButtons.forEach(saveButton => {
+            saveButton.addEventListener('click', () => {
+                const row = saveButton.parentElement.parentElement;
+                const startDateInput = row.querySelector('.start-date');
+                const endDateInput = row.querySelector('.end-date');
+                const excludedDatesInput = row.querySelector('.excluded-dates');
+                const leadCountInput = row.querySelector('.lead-count');
+                const monthOutput = row.querySelector('.month');
+                const yearOutput = row.querySelector('.year');
+                const numDaysOutput = row.querySelector('.num-days');
+                const expectedDRROutput = row.querySelector('.expected-drr');
+
+                const startDate = new Date(startDateInput.value);
+                const endDate = new Date(endDateInput.value);
+                if (endDate < startDate) {
+                    alert("End date cannot be before the start date.");
+                    return;
+                }
+
+                const excludedDates = excludedDatesInput.value.split(',').map(date => date.trim());
+                const numDays = getNumDays(startDate, endDate, excludedDates);
+                const month = startDate.toLocaleString('default', { month: 'long' });
+                const year = startDate.getFullYear();
+                const expectedDRR = leadCountInput.value / numDays;
+
+                monthOutput.textContent = month;
+                yearOutput.textContent = year;
+                numDaysOutput.textContent = numDays;
+                expectedDRROutput.textContent = expectedDRR.toFixed(2); // Display with two decimal places
+            });
+        });
+
+        //event listeners for cancel button
+        const cancelButtons = document.querySelectorAll('.cancel-button');
+        cancelButtons.forEach(cancelButton => {
+            cancelButton.addEventListener('click', () => {
+                const row = cancelButton.parentElement.parentElement;
+                const inputFields = row.querySelectorAll('input');
+                const spans = row.querySelectorAll('span');
+
+                inputFields.forEach(inputField => inputField.value = '');
+                spans.forEach(span => span.textContent = '');
+            });
+        });
+
+        // Event listener for Delete button
+        const deleteButtons = document.querySelectorAll('.delete-button');
+        deleteButtons.forEach(deleteButton => {
+            deleteButton.addEventListener('click', () => {
+                const row = deleteButton.parentElement.parentElement;
+                if(table.rows.length != 1){
+                    row.remove(); // Remove the row from the table
+
+                }
+            });
+        });
+
+
+
+        // Event listener for Add Row button
+        const addRowButton = document.getElementById('add-row-button');
+        var count = 0;
+        addRowButton.addEventListener('click', () => {
+            const table = document.querySelector('table');
+            const newRow = table.insertRow(table.rows.length - 1); // Insert row before the last row
+            
+            
+            var srno = document.getElementById(".srno");
+            count++;
+
+            // Define the HTML for the new row
+            newRow.innerHTML = `
+                    <td><span type="text" id="srno">${count}</td>
+                    <td><input type="date" class="start-date"></td>
+                    <td><input type="date" class="end-date"></td>
+                    <td><span class="month"></span></td>
+                    <td><span class="year"></span></td>
+                    <td><input type="text" class="excluded-dates" placeholder="e.g., 2023-10-16, 2023-10-20"></td>
+                    <td><span class="num-days"></span></td>
+                    <td><input type="number" class="lead-count"></td>
+                    <td><input type="number" class="expected-drr"></td>
+                    <td>
+                        <button class="save-button">Save</button>
+                        <button class="cancel-button">cancel</button>
+                        <button class="delete-button">Delete</button>
+                    </td>
+            `;
+
+            // Add event listeners for the new Save button
+            const newSaveButton = newRow.querySelector('.save-button');
+            
+            newSaveButton.addEventListener('click', () => {
+                console.log("save");
+                const newStartDateInput = newRow.querySelector('.start-date');
+                const newEndDateInput = newRow.querySelector('.end-date');
+                const newExcludedDatesInput = newRow.querySelector('.excluded-dates');
+                const newLeadCountInput = newRow.querySelector('.lead-count');
+                const newMonthOutput = newRow.querySelector('.month');
+                const newYearOutput = newRow.querySelector('.year');
+                const newNumDaysOutput = newRow.querySelector('.num-days');
+                const newExpectedDRROutput = newRow.querySelector('.expected-drr');
+
+                const newStartDate = new Date(newStartDateInput.value);
+                const newEndDate = new Date(newEndDateInput.value);
+                if (newEndDate < newStartDate) {
+                    alert("End date cannot be before the start date.");
+                    return;
+                }
+
+                const newExcludedDates = newExcludedDatesInput.value.split(',').map(date => date.trim());
+                const newNumDays = getNumDays(newStartDate, newEndDate, newExcludedDates);
+                const newMonth = newStartDate.toLocaleString('default', { month: 'long' });
+                const newYear = newStartDate.getFullYear();
+                const newExpectedDRR = newLeadCountInput.value / newNumDays;
+
+                newMonthOutput.textContent = newMonth;
+                newYearOutput.textContent = newYear;
+                newNumDaysOutput.textContent = newNumDays;
+                newExpectedDRROutput.textContent = newExpectedDRR.toFixed(2); // Display with two decimal places
+            });
+
+            const newCancelButton = newRow.querySelector('.cancel-button');
+            newCancelButton.addEventListener('click', () => {
+                const inputFields = newRow.querySelectorAll('input');
+                const spans = newRow.querySelectorAll('span');
+
+                inputFields.forEach(inputField => inputField.value = '');
+                spans.forEach(span => span.textContent = '');
+            });
+
+            const newDeleteButton = newRow.querySelector('.delete-button');
+            newDeleteButton.addEventListener('click', () => {
+                if(table.rows.length != 1){
+                    newRow.remove(); // Remove the new row
+                    count--;
+
+                }
+            });
+
+
+        });
+
+        
+
+
+    </script>
+</body>
+</html>
